@@ -1,8 +1,8 @@
 package net.taptappun.taku.kobayashi.somethingscanner
 
-import android.R.id
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.ImageFormat
 import android.graphics.Matrix
 import android.graphics.SurfaceTexture
 import android.hardware.camera2.*
@@ -17,7 +17,8 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.ml.vision.FirebaseVision
 import com.google.firebase.ml.vision.face.FirebaseVisionFaceDetectorOptions
 import android.hardware.camera2.params.StreamConfigurationMap
-import android.util.DisplayMetrics
+import android.media.ImageReader
+import android.util.Size
 
 class ScannerActivity : AppCompatActivity() {
 
@@ -27,10 +28,11 @@ class ScannerActivity : AppCompatActivity() {
     private val cameraManager: CameraManager by lazy {
         getSystemService(Context.CAMERA_SERVICE) as CameraManager
     }
-    private var currentCameraId: Int = CameraCharacteristics.LENS_FACING_BACK
+    private lateinit var currentCameraIdStringIntPair: Pair<String, Int>
 
     private var cameraDevice: CameraDevice? = null
     private var captureSession: CameraCaptureSession? = null
+    private var imageReader: ImageReader? = null
 
     private var backgroundThread: HandlerThread? = null
     private var backgroundHandler: Handler? = null
@@ -94,7 +96,23 @@ class ScannerActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.scanview)
-        currentCameraId = intent.getIntExtra(Const.CAMERAID_INITENT_KEY, CameraCharacteristics.LENS_FACING_BACK);
+        val currentCameraId = intent.getStringExtra(Const.CAMERAID_INITENT_KEY)
+        var cameraIdInt = CameraCharacteristics.LENS_FACING_FRONT
+        if(!currentCameraId.isNullOrBlank()){
+            cameraIdInt = convertCameraIdStringToInt(cameraManager, currentCameraId)
+        }
+
+        val cameraIdPair = getSuppurtedCameraIdPair(cameraManager, cameraIdInt)
+        if(cameraIdPair == null){
+            finish()
+            return;
+        }
+        currentCameraIdStringIntPair = cameraIdPair
+
+        val previewSize = getMaxImagePreviewSize();
+        if(previewSize != null){
+            imageReader = ImageReader.newInstance(previewSize!!.width, previewSize!!.height, )
+        }
     }
 
     override fun onResume() {
@@ -102,11 +120,11 @@ class ScannerActivity : AppCompatActivity() {
         backgroundThread = HandlerThread("CameraBackground").also { it.start() }
         backgroundHandler = Handler(backgroundThread?.looper)
         if (textureView.isAvailable) {
-            openCamera(currentCameraId)
+            openCamera(currentCameraIdStringIntPair.first)
         } else {
             textureView.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
                 override fun onSurfaceTextureAvailable(texture: SurfaceTexture?, p1: Int, p2: Int) {
-                    openCamera(currentCameraId)
+                    openCamera(currentCameraIdStringIntPair.first)
                 }
 
                 override fun onSurfaceTextureSizeChanged(texture: SurfaceTexture?, p1: Int, p2: Int) {}
@@ -131,27 +149,32 @@ class ScannerActivity : AppCompatActivity() {
 //            imageReader = null
     }
 
+    private fun getMaxImagePreviewSize(): Size? {
+        val characteristics = cameraManager.getCameraCharacteristics(currentCameraIdStringIntPair.first)
+        val map: StreamConfigurationMap = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
+        val sizes: List<Size> = map.getOutputSizes(ImageFormat.YV12).toList()
+        val maxSize = sizes.maxBy{size -> size.width * size.height }
+        return maxSize
+    }
+
     @SuppressLint("MissingPermission")
-    private fun openCamera(willGetCameraId: Int) {
-        val cameraId = getSuppurtedCameraId(cameraManager, willGetCameraId)
-        if (cameraId != null) {
-            cameraManager.openCamera(cameraId, object : CameraDevice.StateCallback() {
-                override fun onOpened(camera: CameraDevice) {
-                    cameraDevice = camera
-                    createCameraPreviewSession()
-                }
+    private fun openCamera(cameraId: String) {
+        cameraManager.openCamera(cameraId, object : CameraDevice.StateCallback() {
+            override fun onOpened(camera: CameraDevice) {
+                cameraDevice = camera
+                createCameraPreviewSession()
+            }
 
-                override fun onDisconnected(camera: CameraDevice) {
-                    cameraDevice?.close()
-                    cameraDevice = null
-                }
+            override fun onDisconnected(camera: CameraDevice) {
+                cameraDevice?.close()
+                cameraDevice = null
+            }
 
-                override fun onError(camera: CameraDevice, p1: Int) {
-                    cameraDevice?.close()
-                    cameraDevice = null
-                }
-            }, backgroundHandler)
-        }
+            override fun onError(camera: CameraDevice, p1: Int) {
+                cameraDevice?.close()
+                cameraDevice = null
+            }
+        }, backgroundHandler)
     }
 
     private fun createCameraPreviewSession() {
@@ -182,19 +205,27 @@ class ScannerActivity : AppCompatActivity() {
         }, null)
     }
 
-    private fun getSuppurtedCameraId(manager: CameraManager, willGetCameraId: Int? = null): String? {
+    private fun convertCameraIdStringToInt(manager: CameraManager, cameraId: String): Int{
+        val characteristics = manager.getCameraCharacteristics(cameraId)
+        return characteristics.get(CameraCharacteristics.LENS_FACING)
+    }
+
+    private fun getSuppurtedCameraIdPair(manager: CameraManager, willGetIntCameraId: Int? = null): Pair<String, Int>? {
         var supportCameraIds = manager.getCameraIdList()
-        var result: String? = null
-        if (willGetCameraId != null) {
-            result = supportCameraIds.firstOrNull({ cameraId ->
-              val characteristics = cameraManager.getCameraCharacteristics(cameraId)
-              val lensFacing = characteristics.get(CameraCharacteristics.LENS_FACING)
-              lensFacing == willGetCameraId
+        var result: Pair<String, Int>? = null
+        if (willGetIntCameraId != null) {
+            val supportCameraId = supportCameraIds.firstOrNull({ cameraId ->
+                val lensFacing = convertCameraIdStringToInt(manager, cameraId)
+                lensFacing == willGetIntCameraId
             })
+            if(supportCameraId != null){
+                result = Pair(supportCameraId, willGetIntCameraId)
+            }
         }
         if (result == null) {
             for (cameraId in supportCameraIds) {
-                result = cameraId
+                val lensFacing = convertCameraIdStringToInt(manager, cameraId)
+                result = Pair(cameraId, lensFacing)
                 break
             }
         }
