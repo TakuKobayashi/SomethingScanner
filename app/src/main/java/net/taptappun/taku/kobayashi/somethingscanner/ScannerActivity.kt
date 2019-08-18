@@ -20,6 +20,7 @@ import android.hardware.camera2.params.StreamConfigurationMap
 import android.media.ImageReader
 import android.util.Size
 import android.media.Image.Plane
+import android.util.Log
 
 class ScannerActivity : AppCompatActivity() {
 
@@ -100,7 +101,7 @@ class ScannerActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.scanview)
         val currentCameraId = intent.getStringExtra(Const.CAMERAID_INITENT_KEY)
-        var cameraIdInt = CameraCharacteristics.LENS_FACING_FRONT
+        var cameraIdInt = CameraCharacteristics.LENS_FACING_BACK
         if(!currentCameraId.isNullOrBlank()){
             cameraIdInt = convertCameraIdStringToInt(cameraManager, currentCameraId)
         }
@@ -117,7 +118,7 @@ class ScannerActivity : AppCompatActivity() {
             finish()
             return
         }
-        imageReader = ImageReader.newInstance(previewSize.width, previewSize.height, ImageFormat.YV12, MAX_STACK_IMAGE_COUNT)
+        imageReader = ImageReader.newInstance(previewSize.width, previewSize.height, ImageFormat.YUV_420_888, MAX_STACK_IMAGE_COUNT)
         imageReader?.setOnImageAvailableListener({ reader ->
             val image = reader.acquireNextImage()
             val planes = image.planes
@@ -161,7 +162,7 @@ class ScannerActivity : AppCompatActivity() {
     private fun getMaxImagePreviewSize(): Size? {
         val characteristics = cameraManager.getCameraCharacteristics(currentCameraIdStringIntPair.first)
         val map: StreamConfigurationMap = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
-        val sizes: List<Size> = map.getOutputSizes(ImageFormat.YV12).toList()
+        val sizes: List<Size> = map.getOutputSizes(ImageFormat.YUV_420_888).toList()
         val maxSize = sizes.maxBy{size -> size.width * size.height }
         return maxSize
     }
