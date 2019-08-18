@@ -17,10 +17,12 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.ml.vision.FirebaseVision
 import com.google.firebase.ml.vision.face.FirebaseVisionFaceDetectorOptions
 import android.hardware.camera2.params.StreamConfigurationMap
+import android.media.Image
 import android.media.ImageReader
 import android.util.Size
 import android.media.Image.Plane
 import android.util.Log
+import com.google.firebase.ml.vision.common.FirebaseVisionImage
 
 class ScannerActivity : AppCompatActivity() {
 
@@ -121,7 +123,6 @@ class ScannerActivity : AppCompatActivity() {
         imageReader = ImageReader.newInstance(previewSize.width, previewSize.height, ImageFormat.YUV_420_888, MAX_STACK_IMAGE_COUNT)
         imageReader?.setOnImageAvailableListener({ reader ->
             val image = reader.acquireNextImage()
-            val planes = image.planes
         }, null)
     }
 
@@ -137,7 +138,9 @@ class ScannerActivity : AppCompatActivity() {
                     openCamera(currentCameraIdStringIntPair.first)
                 }
 
-                override fun onSurfaceTextureSizeChanged(texture: SurfaceTexture?, p1: Int, p2: Int) {}
+                override fun onSurfaceTextureSizeChanged(texture: SurfaceTexture?, p1: Int, p2: Int) {
+                    rotateTextureView()
+                }
                 override fun onSurfaceTextureUpdated(texture: SurfaceTexture?) {}
                 override fun onSurfaceTextureDestroyed(texture: SurfaceTexture?): Boolean = true
             }
@@ -169,6 +172,7 @@ class ScannerActivity : AppCompatActivity() {
 
     @SuppressLint("MissingPermission")
     private fun openCamera(cameraId: String) {
+        rotateTextureView()
         cameraManager.openCamera(cameraId, object : CameraDevice.StateCallback() {
             override fun onOpened(camera: CameraDevice) {
                 cameraDevice = camera
@@ -242,6 +246,12 @@ class ScannerActivity : AppCompatActivity() {
         return result
     }
 
+    private fun getOrientation(cameraId: String): Int {
+        val cameraOrientation = getCameraOrientation(cameraId)
+        val applicationOrientation = getApplicationOrientation()
+        return cameraOrientation - applicationOrientation
+    }
+
     /*
      * 物理的なカメラの向きを取得
      */
@@ -288,7 +298,7 @@ class ScannerActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupScan() {
+    private fun scan(image: Image, rotation: Int) {
         val builder = FirebaseVisionFaceDetectorOptions.Builder()
         builder.setContourMode(FirebaseVisionFaceDetectorOptions.ALL_CONTOURS)
         builder.setLandmarkMode(FirebaseVisionFaceDetectorOptions.ALL_LANDMARKS)
@@ -297,6 +307,7 @@ class ScannerActivity : AppCompatActivity() {
         builder.setPerformanceMode(FirebaseVisionFaceDetectorOptions.ACCURATE)
         builder.enableTracking()
 
+        val firebaseVisionImage = FirebaseVisionImage.fromMediaImage(image, rotation)
         val detector = FirebaseVision.getInstance().getVisionFaceDetector(builder.build())
     }
 }
