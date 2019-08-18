@@ -16,6 +16,8 @@ import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.ml.vision.FirebaseVision
 import com.google.firebase.ml.vision.face.FirebaseVisionFaceDetectorOptions
+import android.hardware.camera2.params.StreamConfigurationMap
+import android.util.DisplayMetrics
 
 class ScannerActivity : AppCompatActivity() {
 
@@ -25,6 +27,7 @@ class ScannerActivity : AppCompatActivity() {
     private val cameraManager: CameraManager by lazy {
         getSystemService(Context.CAMERA_SERVICE) as CameraManager
     }
+    private var currentCameraId: Int = CameraCharacteristics.LENS_FACING_BACK
 
     private var cameraDevice: CameraDevice? = null
     private var captureSession: CameraCaptureSession? = null
@@ -91,6 +94,7 @@ class ScannerActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.scanview)
+        currentCameraId = intent.getIntExtra(Const.CAMERAID_INITENT_KEY, CameraCharacteristics.LENS_FACING_BACK);
     }
 
     override fun onResume() {
@@ -98,11 +102,11 @@ class ScannerActivity : AppCompatActivity() {
         backgroundThread = HandlerThread("CameraBackground").also { it.start() }
         backgroundHandler = Handler(backgroundThread?.looper)
         if (textureView.isAvailable) {
-            openCamera(CameraCharacteristics.LENS_FACING_BACK)
+            openCamera(currentCameraId)
         } else {
             textureView.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
                 override fun onSurfaceTextureAvailable(texture: SurfaceTexture?, p1: Int, p2: Int) {
-                    openCamera(CameraCharacteristics.LENS_FACING_BACK)
+                    openCamera(currentCameraId)
                 }
 
                 override fun onSurfaceTextureSizeChanged(texture: SurfaceTexture?, p1: Int, p2: Int) {}
@@ -163,6 +167,8 @@ class ScannerActivity : AppCompatActivity() {
         cameraDevice!!.createCaptureSession(listOf(surface), object : CameraCaptureSession.StateCallback() {
             override fun onConfigured(session: CameraCaptureSession) {
                 captureSession = session
+                // プレビューがぼやけては困るのでオートフォーカスを利用する
+                previewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
                 // カメラプレビューを開始(TextureViewにカメラの画像が表示され続ける)
                 captureSession?.setRepeatingRequest(
                     previewRequestBuilder.build(),
@@ -237,7 +243,7 @@ class ScannerActivity : AppCompatActivity() {
             backgroundThread = null
             backgroundHandler = null
         } catch (e: InterruptedException) {
-//            Log.e(TAG, e.toString())
+//          Log.e(TAG, e.toString())
         }
     }
 
