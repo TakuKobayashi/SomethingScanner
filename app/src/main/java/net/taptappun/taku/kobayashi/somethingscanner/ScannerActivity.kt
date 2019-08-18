@@ -155,8 +155,8 @@ class ScannerActivity : AppCompatActivity() {
         captureSession = null
         cameraDevice?.close()
         cameraDevice = null
-//            imageReader?.close()
-//            imageReader = null
+        imageReader?.close()
+        imageReader = null
     }
 
     private fun getMaxImagePreviewSize(): Size? {
