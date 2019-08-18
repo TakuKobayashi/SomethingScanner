@@ -1,28 +1,26 @@
 package net.taptappun.taku.kobayashi.somethingscanner
 
+import android.R.id
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Matrix
 import android.graphics.SurfaceTexture
 import android.hardware.camera2.*
-import androidx.appcompat.app.AppCompatActivity
+import android.hardware.camera2.CameraCharacteristics
 import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
 import android.view.Surface
 import android.view.TextureView
 import android.view.WindowManager
-import com.google.firebase.ml.vision.face.FirebaseVisionFaceDetectorOptions
+import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.ml.vision.FirebaseVision
-import android.R.id
-import android.hardware.camera2.CameraCharacteristics
-
-
+import com.google.firebase.ml.vision.face.FirebaseVisionFaceDetectorOptions
 
 class ScannerActivity : AppCompatActivity() {
 
     private val textureView: TextureView by lazy {
-        findViewById<TextureView>(R.id.cameraPreview);
+        findViewById<TextureView>(R.id.cameraPreview)
     }
     private val cameraManager: CameraManager by lazy {
         getSystemService(Context.CAMERA_SERVICE) as CameraManager
@@ -31,12 +29,68 @@ class ScannerActivity : AppCompatActivity() {
     private var cameraDevice: CameraDevice? = null
     private var captureSession: CameraCaptureSession? = null
 
-    private var backgroundThread: HandlerThread? = null;
-    private var backgroundHandler: Handler? = null;
+    private var backgroundThread: HandlerThread? = null
+    private var backgroundHandler: Handler? = null
+
+    private val mCameraCaptureSessionCallback: CameraCaptureSession.CaptureCallback = object : CameraCaptureSession.CaptureCallback() {
+        override fun onCaptureBufferLost(
+            session: CameraCaptureSession,
+            request: CaptureRequest,
+            target: Surface,
+            frameNumber: Long
+        ) {
+            super.onCaptureBufferLost(session, request, target, frameNumber)
+        }
+
+        override fun onCaptureCompleted(
+            session: CameraCaptureSession,
+            request: CaptureRequest,
+            result: TotalCaptureResult
+        ) {
+            super.onCaptureCompleted(session, request, result)
+        }
+
+        override fun onCaptureFailed(
+            session: CameraCaptureSession,
+            request: CaptureRequest,
+            failure: CaptureFailure
+        ) {
+            super.onCaptureFailed(session, request, failure)
+        }
+
+        override fun onCaptureProgressed(
+            session: CameraCaptureSession,
+            request: CaptureRequest,
+            partialResult: CaptureResult
+        ) {
+            super.onCaptureProgressed(session, request, partialResult)
+        }
+
+        override fun onCaptureSequenceAborted(session: CameraCaptureSession, sequenceId: Int) {
+            super.onCaptureSequenceAborted(session, sequenceId)
+        }
+
+        override fun onCaptureSequenceCompleted(
+            session: CameraCaptureSession,
+            sequenceId: Int,
+            frameNumber: Long
+        ) {
+            super.onCaptureSequenceCompleted(session, sequenceId, frameNumber)
+        }
+
+        override fun onCaptureStarted(
+            session: CameraCaptureSession,
+            request: CaptureRequest,
+            timestamp: Long,
+            frameNumber: Long
+        ) {
+            super.onCaptureStarted(session, request, timestamp, frameNumber)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.scanview);
+        setContentView(R.layout.scanview)
     }
 
     override fun onResume() {
@@ -60,8 +114,8 @@ class ScannerActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        stopBackgroundThread();
-        closeCamera();
+        stopBackgroundThread()
+        closeCamera()
     }
 
     private fun closeCamera() {
@@ -75,9 +129,9 @@ class ScannerActivity : AppCompatActivity() {
 
     @SuppressLint("MissingPermission")
     private fun openCamera(willGetCameraId: Int) {
-        val cameraId = getSuppurtedCameraId(cameraManager, willGetCameraId);
-        if(cameraId != null){
-            cameraManager.openCamera(cameraId, object: CameraDevice.StateCallback() {
+        val cameraId = getSuppurtedCameraId(cameraManager, willGetCameraId)
+        if (cameraId != null) {
+            cameraManager.openCamera(cameraId, object : CameraDevice.StateCallback() {
                 override fun onOpened(camera: CameraDevice) {
                     cameraDevice = camera
                     createCameraPreviewSession()
@@ -110,32 +164,35 @@ class ScannerActivity : AppCompatActivity() {
             override fun onConfigured(session: CameraCaptureSession) {
                 captureSession = session
                 // カメラプレビューを開始(TextureViewにカメラの画像が表示され続ける)
-                captureSession?.setRepeatingRequest(previewRequestBuilder.build(), null, null)
+                captureSession?.setRepeatingRequest(
+                    previewRequestBuilder.build(),
+                    mCameraCaptureSessionCallback,
+                    backgroundHandler
+                )
             }
 
             override fun onConfigureFailed(session: CameraCaptureSession) {
-
             }
         }, null)
     }
 
-    private fun getSuppurtedCameraId(manager: CameraManager, willGetCameraId: Int? = null): String?{
+    private fun getSuppurtedCameraId(manager: CameraManager, willGetCameraId: Int? = null): String? {
         var supportCameraIds = manager.getCameraIdList()
-        var result: String? = null;
-        if(willGetCameraId != null){
-            result = supportCameraIds.firstOrNull({cameraId ->
+        var result: String? = null
+        if (willGetCameraId != null) {
+            result = supportCameraIds.firstOrNull({ cameraId ->
               val characteristics = cameraManager.getCameraCharacteristics(cameraId)
               val lensFacing = characteristics.get(CameraCharacteristics.LENS_FACING)
               lensFacing == willGetCameraId
             })
         }
-        if(result == null){
-            for(cameraId in supportCameraIds){
-                result = cameraId;
-                break;
+        if (result == null) {
+            for (cameraId in supportCameraIds) {
+                result = cameraId
+                break
             }
         }
-        return result;
+        return result
     }
 
     /*
@@ -182,17 +239,16 @@ class ScannerActivity : AppCompatActivity() {
         } catch (e: InterruptedException) {
 //            Log.e(TAG, e.toString())
         }
-
     }
 
-    private fun setupScan(){
-        val builder = FirebaseVisionFaceDetectorOptions.Builder();
-        builder.setContourMode(FirebaseVisionFaceDetectorOptions.ALL_CONTOURS);
+    private fun setupScan() {
+        val builder = FirebaseVisionFaceDetectorOptions.Builder()
+        builder.setContourMode(FirebaseVisionFaceDetectorOptions.ALL_CONTOURS)
         builder.setLandmarkMode(FirebaseVisionFaceDetectorOptions.ALL_LANDMARKS)
         builder.setClassificationMode(FirebaseVisionFaceDetectorOptions.ALL_CLASSIFICATIONS)
         builder.setMinFaceSize(0.05f)
         builder.setPerformanceMode(FirebaseVisionFaceDetectorOptions.ACCURATE)
-        builder.enableTracking();
+        builder.enableTracking()
 
         val detector = FirebaseVision.getInstance().getVisionFaceDetector(builder.build())
     }
