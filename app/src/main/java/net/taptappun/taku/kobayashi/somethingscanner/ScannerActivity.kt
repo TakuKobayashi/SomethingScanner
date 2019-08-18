@@ -103,7 +103,7 @@ class ScannerActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.scanview)
         val currentCameraId = intent.getStringExtra(Const.CAMERAID_INITENT_KEY)
-        var cameraIdInt = CameraCharacteristics.LENS_FACING_BACK
+        var cameraIdInt = CameraCharacteristics.LENS_FACING_FRONT
         if(!currentCameraId.isNullOrBlank()){
             cameraIdInt = convertCameraIdStringToInt(cameraManager, currentCameraId)
         }
@@ -123,6 +123,7 @@ class ScannerActivity : AppCompatActivity() {
         imageReader = ImageReader.newInstance(previewSize.width, previewSize.height, ImageFormat.YUV_420_888, MAX_STACK_IMAGE_COUNT)
         imageReader?.setOnImageAvailableListener({ reader ->
             val image = reader.acquireNextImage()
+            scan(image, getOrientation(currentCameraIdStringIntPair.first))
         }, null)
     }
 
@@ -299,6 +300,7 @@ class ScannerActivity : AppCompatActivity() {
     }
 
     private fun scan(image: Image, rotation: Int) {
+        Log.d(Const.TAG, "setup success")
         val builder = FirebaseVisionFaceDetectorOptions.Builder()
         builder.setContourMode(FirebaseVisionFaceDetectorOptions.ALL_CONTOURS)
         builder.setLandmarkMode(FirebaseVisionFaceDetectorOptions.ALL_LANDMARKS)
@@ -309,5 +311,14 @@ class ScannerActivity : AppCompatActivity() {
 
         val firebaseVisionImage = FirebaseVisionImage.fromMediaImage(image, rotation)
         val detector = FirebaseVision.getInstance().getVisionFaceDetector(builder.build())
+        val result = detector.detectInImage(firebaseVisionImage)
+            .addOnSuccessListener { faces ->
+                Log.d(Const.TAG, "onsuccess")
+                for(face in faces){
+                    Log.e(Const.TAG, "id:" + face.trackingId + " box:" + face.boundingBox)
+                }
+            }
+            .addOnFailureListener { Log.e(Const.TAG, "onfailure") }
+        Log.d(Const.TAG, "" + result)
     }
 }
