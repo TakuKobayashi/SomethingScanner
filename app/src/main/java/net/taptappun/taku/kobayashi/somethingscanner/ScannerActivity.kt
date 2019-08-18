@@ -19,6 +19,7 @@ import com.google.firebase.ml.vision.face.FirebaseVisionFaceDetectorOptions
 import android.hardware.camera2.params.StreamConfigurationMap
 import android.media.ImageReader
 import android.util.Size
+import android.media.Image.Plane
 
 class ScannerActivity : AppCompatActivity() {
 
@@ -36,6 +37,8 @@ class ScannerActivity : AppCompatActivity() {
 
     private var backgroundThread: HandlerThread? = null
     private var backgroundHandler: Handler? = null
+
+    private val MAX_STACK_IMAGE_COUNT = 2
 
     private val mCameraCaptureSessionCallback: CameraCaptureSession.CaptureCallback = object : CameraCaptureSession.CaptureCallback() {
         override fun onCaptureBufferLost(
@@ -110,9 +113,15 @@ class ScannerActivity : AppCompatActivity() {
         currentCameraIdStringIntPair = cameraIdPair
 
         val previewSize = getMaxImagePreviewSize();
-        if(previewSize != null){
-            imageReader = ImageReader.newInstance(previewSize!!.width, previewSize!!.height, )
+        if(previewSize == null){
+            finish()
+            return
         }
+        imageReader = ImageReader.newInstance(previewSize.width, previewSize.height, ImageFormat.YV12, MAX_STACK_IMAGE_COUNT)
+        imageReader?.setOnImageAvailableListener({ reader ->
+            val image = reader.acquireNextImage()
+            val planes = image.planes
+        }, null)
     }
 
     override fun onResume() {
