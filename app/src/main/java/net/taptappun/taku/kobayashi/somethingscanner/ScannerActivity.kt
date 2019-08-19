@@ -124,6 +124,7 @@ class ScannerActivity : AppCompatActivity() {
         imageReader?.setOnImageAvailableListener({ reader ->
             val image = reader.acquireNextImage()
             scan(image, getOrientation(currentCameraIdStringIntPair.first))
+            image.close()
         }, null)
     }
 
@@ -197,12 +198,14 @@ class ScannerActivity : AppCompatActivity() {
             return
         }
         val texture = textureView.surfaceTexture
-        val surface = Surface(texture)
+        val captureSurfaces = listOf(Surface(texture), imageReader?.surface)
 
         val previewRequestBuilder = cameraDevice!!.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
-        previewRequestBuilder.addTarget(surface)
+        for(surface in captureSurfaces){
+            previewRequestBuilder.addTarget(surface)
+        }
 
-        cameraDevice!!.createCaptureSession(listOf(surface), object : CameraCaptureSession.StateCallback() {
+        cameraDevice!!.createCaptureSession(captureSurfaces, object : CameraCaptureSession.StateCallback() {
             override fun onConfigured(session: CameraCaptureSession) {
                 captureSession = session
                 // プレビューがぼやけては困るのでオートフォーカスを利用する
