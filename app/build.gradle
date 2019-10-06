@@ -5,7 +5,7 @@ apply plugin: 'org.jlleitschuh.gradle.ktlint'
 apply plugin: 'com.google.gms.google-services'
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 29
     defaultConfig {
         def versionNameList = "$application_version".split(/\./)
         def powCounter = versionNameList.size()
@@ -16,7 +16,7 @@ android {
         }
         applicationId "net.taptappun.taku.kobayashi.somethingscanner"
         minSdkVersion 21
-        targetSdkVersion 28
+        targetSdkVersion 29
         versionCode versionNumber
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
