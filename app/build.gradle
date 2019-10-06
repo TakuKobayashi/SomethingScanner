@@ -3,6 +3,9 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'org.jlleitschuh.gradle.ktlint'
 apply plugin: 'com.google.gms.google-services'
+apply plugin: 'org.jetbrains.dokka-android'
+
+def properties = loadLocalProperties();
 
 android {
     compileSdkVersion 29
@@ -21,6 +24,16 @@ android {
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
+    signingConfigs {
+        release {
+            if(!properties.getProperty("RELEASE_STORE_FILE", "").empty){
+                storeFile file(properties.getProperty("RELEASE_STORE_FILE", ""))
+            }
+            storePassword properties.getProperty("RELEASE_STORE_PASSWORD", "")
+            keyAlias properties.getProperty("RELEASE_KEY_ALIAS", "")
+            keyPassword properties.getProperty("RELEASE_KEY_PASSWORD", "")
+        }
+    }
     buildTypes {
         debug {
             testCoverageEnabled true
@@ -28,10 +41,26 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
         release {
+            // 使われていないResourceファイルをビルドするときに含めないことでアプリサイズを減らす設定を有効にする
+            shrinkResources true
+            // 使われていないソースコードを削ってビルドすることでアプリサイズを減らす設定を有効にする
             minifyEnabled true
+            // proguard-android-optimize.txtにすることでより高精度のコード圧縮になる。またLogを出力しない設定を適用させる場合もこの設定で圧縮をかける
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
+}
+
+private def loadLocalProperties() {
+    // local.propertiesの読み込み
+    Properties properties = new Properties()
+    def localPropertiesFile = project.rootProject.file('local.properties');
+    if(!localPropertiesFile.exists()){
+        localPropertiesFile.createNewFile();
+    }
+    properties.load(localPropertiesFile.newDataInputStream())
+    return properties
 }
 
 dependencies {
@@ -56,4 +85,23 @@ ktlint {
     android = true
     ignoreFailures = true
     additionalEditorconfigFile = file(".editorconfig")
+}
+
+dokka {
+    outputFormat = 'html'
+    sourceDirs = files('src/main')
+    outputDirectory = "$buildDir/documents"
+}
+
+if(!properties.getProperty("GOOGLE_PLAY_PUBLISH_API_CONFIG_FILE", "").empty){
+    apply plugin: 'com.github.triplet.play'
+
+    play{
+        serviceAccountCredentials = file(properties.getProperty("GOOGLE_PLAY_PUBLISH_API_CONFIG_FILE", ""))
+        artifactDir = file("build/outputs/bundle/release/")
+        // リリースのStatus completed/draft/inProgress/halted のどれか(defaultは completed) inProgressだと部分公開という意味
+        releaseStatus = "draft"
+        // ストアにあるバージョンがConflictsしたらどうするか設定する autoは自動的に正しいバージョンを設定するという意味
+        resolutionStrategy = "auto"
+    }
 }
