@@ -46,7 +46,7 @@ android {
             // 使われていないソースコードを削ってビルドすることでアプリサイズを減らす設定を有効にする
             minifyEnabled true
             // proguard-android-optimize.txtにすることでより高精度のコード圧縮になる。またLogを出力しない設定を適用させる場合もこの設定で圧縮をかける
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
         }
     }
