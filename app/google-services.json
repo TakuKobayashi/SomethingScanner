@@ -8,12 +8,20 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:337972031716:android:97b96956804e0410",
+        "mobilesdk_app_id": "1:337972031716:android:20cda5db5a20c47c327cf1",
         "android_client_info": {
-          "package_name": "net.taptappun.taku.kobayashi.somethingscanner"
+          "package_name": "net.taptappun.taku.kobayashi.extendcamerascanner"
         }
       },
       "oauth_client": [
+        {
+          "client_id": "337972031716-v0ear2ub37dv78nip26o1t4f17hbj3oe.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "net.taptappun.taku.kobayashi.extendcamerascanner",
+            "certificate_hash": "2494ed50be3a8b8bbd4752d3cc3088df55671d71"
+          }
+        },
         {
           "client_id": "337972031716-sfjs4tho5qg9mb5d54i0u6c4il4pk5af.apps.googleusercontent.com",
           "client_type": 3
@@ -30,6 +38,13 @@
             {
               "client_id": "337972031716-sfjs4tho5qg9mb5d54i0u6c4il4pk5af.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "337972031716-9k2uo4g4nvn9nshb690mus0e4so63v7d.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "net.taptappun.taku.kobayashi.somethingscanner"
+              }
             }
           ]
         }
