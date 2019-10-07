@@ -1,4 +1,4 @@
-package net.taptappun.taku.kobayashi.somethingscanner
+package net.taptappun.taku.kobayashi.extendcamerascanner
 
 object Const {
     val TAG = "SomethingScanner"

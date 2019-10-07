@@ -1,4 +1,4 @@
-package net.taptappun.taku.kobayashi.somethingscanner
+package net.taptappun.taku.kobayashi.extendcamerascanner
 
 import org.junit.Assert.*
 import org.junit.Test

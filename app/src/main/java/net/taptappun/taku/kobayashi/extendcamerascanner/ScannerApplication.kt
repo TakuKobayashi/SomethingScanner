@@ -1,4 +1,4 @@
-package net.taptappun.taku.kobayashi.somethingscanner
+package net.taptappun.taku.kobayashi.extendcamerascanner
 
 import android.app.Application
 

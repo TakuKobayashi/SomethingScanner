@@ -1,4 +1,4 @@
-package net.taptappun.taku.kobayashi.somethingscanner
+package net.taptappun.taku.kobayashi.extendcamerascanner
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -20,7 +20,6 @@ import android.hardware.camera2.params.StreamConfigurationMap
 import android.media.Image
 import android.media.ImageReader
 import android.util.Size
-import android.media.Image.Plane
 import android.util.Log
 import com.google.firebase.ml.vision.common.FirebaseVisionImage
 
@@ -103,9 +102,12 @@ class ScannerActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.scanview)
         val currentCameraId = intent.getStringExtra(Const.CAMERAID_INITENT_KEY)
-        var cameraIdInt = CameraCharacteristics.LENS_FACING_FRONT
+        var cameraIdInt: Int = CameraCharacteristics.LENS_FACING_FRONT
         if(!currentCameraId.isNullOrBlank()){
-            cameraIdInt = convertCameraIdStringToInt(cameraManager, currentCameraId)
+            val convertedCameraIdInt = convertCameraIdStringToInt(cameraManager, currentCameraId)
+            if(convertedCameraIdInt != null){
+                cameraIdInt = convertedCameraIdInt
+            }
         }
 
         val cameraIdPair = getSuppurtedCameraIdPair(cameraManager, cameraIdInt)
@@ -166,9 +168,9 @@ class ScannerActivity : AppCompatActivity() {
 
     private fun getMaxImagePreviewSize(): Size? {
         val characteristics = cameraManager.getCameraCharacteristics(currentCameraIdStringIntPair.first)
-        val map: StreamConfigurationMap = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
-        val sizes: List<Size> = map.getOutputSizes(ImageFormat.YUV_420_888).toList()
-        val maxSize = sizes.maxBy{size -> size.width * size.height }
+        val map: StreamConfigurationMap? = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
+        val sizes: List<Size>? = map?.getOutputSizes(ImageFormat.YUV_420_888)?.toList()
+        val maxSize = sizes?.maxBy{size -> size.width * size.height }
         return maxSize
     }
 
@@ -202,7 +204,9 @@ class ScannerActivity : AppCompatActivity() {
 
         val previewRequestBuilder = cameraDevice!!.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
         for(surface in captureSurfaces){
-            previewRequestBuilder.addTarget(surface)
+            if(surface != null){
+                previewRequestBuilder.addTarget(surface)
+            }
         }
 
         cameraDevice!!.createCaptureSession(captureSurfaces, object : CameraCaptureSession.StateCallback() {
@@ -223,7 +227,7 @@ class ScannerActivity : AppCompatActivity() {
         }, null)
     }
 
-    private fun convertCameraIdStringToInt(manager: CameraManager, cameraId: String): Int{
+    private fun convertCameraIdStringToInt(manager: CameraManager, cameraId: String): Int?{
         val characteristics = manager.getCameraCharacteristics(cameraId)
         return characteristics.get(CameraCharacteristics.LENS_FACING)
     }
@@ -234,7 +238,7 @@ class ScannerActivity : AppCompatActivity() {
         if (willGetIntCameraId != null) {
             val supportCameraId = supportCameraIds.firstOrNull({ cameraId ->
                 val lensFacing = convertCameraIdStringToInt(manager, cameraId)
-                lensFacing == willGetIntCameraId
+                lensFacing === willGetIntCameraId
             })
             if(supportCameraId != null){
                 result = Pair(supportCameraId, willGetIntCameraId)
@@ -243,8 +247,10 @@ class ScannerActivity : AppCompatActivity() {
         if (result == null) {
             for (cameraId in supportCameraIds) {
                 val lensFacing = convertCameraIdStringToInt(manager, cameraId)
-                result = Pair(cameraId, lensFacing)
-                break
+                if(lensFacing != null){
+                    result = Pair(cameraId, lensFacing)
+                    break
+                }
             }
         }
         return result

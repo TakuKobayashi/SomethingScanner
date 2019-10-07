@@ -1,4 +1,4 @@
-package net.taptappun.taku.kobayashi.somethingscanner
+package net.taptappun.taku.kobayashi.extendcamerascanner
 
 import androidx.test.InstrumentationRegistry
 import androidx.test.runner.AndroidJUnit4
