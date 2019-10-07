@@ -17,7 +17,7 @@ android {
             powCounter = powCounter - 1
             (Math.pow(100, powCounter) * number).toInteger()
         }
-        applicationId "net.taptappun.taku.kobayashi.somethingscanner"
+        applicationId "net.taptappun.taku.kobayashi.extendcamerascanner"
         minSdkVersion 21
         targetSdkVersion 29
         versionCode versionNumber
