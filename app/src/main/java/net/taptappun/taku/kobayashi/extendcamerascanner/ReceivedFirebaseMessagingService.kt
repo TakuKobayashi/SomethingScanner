@@ -10,6 +10,7 @@ class ReceivedFirebaseMessagingService : FirebaseMessagingService() {
 
         val notification = remoteMessage.notification;
         if(notification != null){
+            Log.d(Const.TAG, "Notification Body: " + notification.body)
         }
         
         val messageData = remoteMessage.data;
