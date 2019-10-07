@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">SomethingScanner</string>
+    <string name="app_name">ExtendCameraScanner</string>
+    <string name="default_notification_channel_id">AnnouncementChannel</string>
 </resources>
