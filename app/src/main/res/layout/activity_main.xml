@@ -56,13 +56,33 @@
         android:text="BarcodeScan"
     />
 
-    <com.gc.materialdesign.views.ButtonRectangle
-        android:id="@+id/analyticsHookButton"
-        android:layout_width="wrap_content"
+    <RelativeLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#1E88E5"
-        android:layout_below="@+id/barcodeScanButton"
-        android:layout_centerHorizontal="true"
-        android:text="AnalyticsHook"
-    />
+        android:layout_below="@+id/barcodeScanButton">
+
+        <NumberPicker
+            android:id="@+id/agePicker"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"/>
+
+        <TextView
+            android:id="@+id/ageLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="何歳ですか?"
+            android:layout_centerVertical="true"
+            android:layout_toLeftOf="@+id/agePicker" />
+
+        <com.gc.materialdesign.views.ButtonRectangle
+            android:id="@+id/analyticsHookButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#1E88E5"
+            android:layout_toRightOf="@+id/agePicker"
+            android:layout_centerVertical="true"
+            android:text="Submit"
+        />
+    </RelativeLayout>
 </RelativeLayout>
