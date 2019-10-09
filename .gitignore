@@ -36,6 +36,7 @@ proguard/
 app/build/
 build/
 captures/
+google-services.json
 
 .externalNativeBuild
 libwebp
