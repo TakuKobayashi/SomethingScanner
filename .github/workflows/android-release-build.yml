@@ -48,6 +48,7 @@ jobs:
           echo "RELEASE_KEY_ALIAS=key0" >> ./local.properties
           echo "RELEASE_KEY_PASSWORD=${{ secrets.AndroidBuildPassword }}" >> ./local.properties
           echo "${{ secrets.GoogleServicesJson }}" >> ./app/google-services.json
+          cat ./app/google-services.json
       - name: Android Release Build
         run: |
           ./gradlew assembleRelease
