@@ -51,10 +51,10 @@ jobs:
           echo "RELEASE_KEY_ALIAS=key0" >> ./local.properties
           echo "RELEASE_KEY_PASSWORD=${AndroidBuildPassword}" >> ./local.properties
           echo ${GoogleServicesJson} >> ./app/google-services.json
-          cat ./app/google-services.json
-      - name: Android Release Build
-        run: |
-          ./gradlew assembleRelease
+      - name: Android Release Apk Build
+        run: ./gradlew assembleRelease
+      - name: Android Release aab Build
+        run: ./gradlew bundleRelease
       - uses: actions/upload-artifact@master
         with:
           name: outputs
