@@ -63,7 +63,7 @@ jobs:
         uses: rtCamp/action-slack-notify@master
         env:
           SLACK_CHANNEL: tabun_muri
-          SLACK_MESSAGE: ビルドができました。こちらからダウンロードしてインストールしてください。 https://github.com/TakuKobayashi/SomethingScanner/actions
-          SLACK_TITLE: ビルドができました
+          SLACK_MESSAGE: "ビルドができました。こちらからダウンロードしてインストールしてください。 https://github.com/TakuKobayashi/SomethingScanner/actions"
+          SLACK_TITLE: "ビルドができました"
           SLACK_USERNAME: taptappun
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
