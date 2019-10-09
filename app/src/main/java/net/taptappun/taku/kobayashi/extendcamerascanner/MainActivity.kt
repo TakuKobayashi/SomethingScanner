@@ -69,6 +69,11 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "Success:" + task.isSuccessful + " token:" + task.result?.token, Toast.LENGTH_LONG).show()
             }
             analytics.setUserProperty("age", agePicker.value.toString())
+            val bundle = Bundle()
+            bundle.putString(FirebaseAnalytics.Param.ITEM_ID, R.id.analyticsHookButton.toString())
+            bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, "analyticsHookButton")
+            bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "button")
+            analytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle)
             Log.d(Const.TAG, "Log Event Success")
 
         })
