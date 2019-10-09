@@ -42,12 +42,15 @@ jobs:
           yes | android-sdk-linux/tools/bin/sdkmanager --licenses
           set -o pipefail
       - name: Setup Build Configs
+        env:
+          GoogleServicesJson: ${{ secrets.GoogleServicesJson }}
+          AndroidBuildPassword: ${{ secrets.AndroidBuildPassword }}
         run: |
           echo "RELEASE_STORE_FILE=`pwd`/application.keystore" >> ./local.properties
-          echo "RELEASE_STORE_PASSWORD=${{ secrets.AndroidBuildPassword }}" >> ./local.properties
+          echo "RELEASE_STORE_PASSWORD=${AndroidBuildPassword}" >> ./local.properties
           echo "RELEASE_KEY_ALIAS=key0" >> ./local.properties
-          echo "RELEASE_KEY_PASSWORD=${{ secrets.AndroidBuildPassword }}" >> ./local.properties
-          echo "${{ secrets.GoogleServicesJson }}" >> ./app/google-services.json
+          echo "RELEASE_KEY_PASSWORD=${AndroidBuildPassword}" >> ./local.properties
+          echo ${GoogleServicesJson} >> ./app/google-services.json
           cat ./app/google-services.json
       - name: Android Release Build
         run: |
